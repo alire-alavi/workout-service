@@ -135,3 +135,40 @@ func (wh *WorkoutHandler) HandleUpdateWorkoutById(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(existingWorkout)
 }
+
+
+func (wh *WorkoutHandler) HandleDeleteWorkoutById(w http.ResponseWriter, r *http.Request) {
+	paramsWorkoutId := chi.URLParam(r, "id")
+	if paramsWorkoutId == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	workoutID, err := strconv.ParseInt(paramsWorkoutId, 10, 64)
+	if err != nil {
+		fmt.Println(err)
+		http.NotFound(w, r)
+		return
+	}
+
+	existingWorkout, err := wh.workoutStore.GetWorkoutByID(workoutID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Error while finding the parseInt", http.StatusInternalServerError)
+		return
+	}
+
+	if existingWorkout == nil {
+		http.NotFound(w, r)
+	}
+
+	// delete the existing workout
+	err = wh.workoutStore.DeleteWorkout(workoutID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Error while deleting the existing workout", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
